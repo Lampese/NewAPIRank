@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { refreshAllSites } from "@/lib/sync";
+import { refreshSite } from "@/lib/sync";
+import { normalizeSiteUrl, siteRegistry } from "@/lib/site-registry";
 
 function verifyCronSecret(request: Request): boolean {
   const auth = request.headers.get("authorization");
@@ -9,61 +10,99 @@ function verifyCronSecret(request: Request): boolean {
   return auth === `Bearer ${secret}`;
 }
 
-// 后台同步状态
-let syncRunning = false;
-let lastSyncResult: {
-  startedAt: string;
-  finishedAt?: string;
-  duration?: string;
-  sites?: number;
-  ok?: number;
-  failed?: number;
-} | null = null;
+// 全局同步状态 — 任何人都能查
+export const syncState = {
+  running: false,
+  total: 0,
+  completed: 0,
+  ok: 0,
+  failed: 0,
+  current: "",
+  startedAt: null as string | null,
+  finishedAt: null as string | null,
+  duration: null as string | null,
+};
 
 export async function POST(request: Request) {
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (syncRunning) {
+  if (syncState.running) {
     return NextResponse.json({
-      ok: true,
       message: "Sync already running",
-      lastSync: lastSyncResult,
+      ...syncState,
     });
   }
 
-  // 立即返回，后台异步执行
-  syncRunning = true;
-  const startTime = Date.now();
-  lastSyncResult = { startedAt: new Date().toISOString() };
+  // 立即返回，后台执行
+  syncState.running = true;
+  syncState.completed = 0;
+  syncState.ok = 0;
+  syncState.failed = 0;
+  syncState.current = "";
+  syncState.startedAt = new Date().toISOString();
+  syncState.finishedAt = null;
+  syncState.duration = null;
 
-  // 不 await，让它后台跑
-  refreshAllSites(prisma)
-    .then(({ results }) => {
-      const duration = Date.now() - startTime;
-      lastSyncResult = {
-        startedAt: lastSyncResult!.startedAt,
-        finishedAt: new Date().toISOString(),
-        duration: `${duration}ms`,
-        sites: results.length,
-        ok: results.filter((r) => r.status === "up").length,
-        failed: results.filter((r) => r.error).length,
-      };
-      console.log(
-        `[sync] 完成: ${results.length} 站, ${lastSyncResult.ok} 成功, ${lastSyncResult.failed} 失败, 耗时 ${lastSyncResult.duration}`
+  const startTime = Date.now();
+
+  // 后台跑同步，带进度
+  (async () => {
+    try {
+      // 确保 registry 站点存在
+      const existingSites = await prisma.site.findMany({
+        select: { id: true, name: true, url: true },
+      });
+      const siteByUrl = new Map(
+        existingSites.map((s) => [normalizeSiteUrl(s.url), s])
       );
-    })
-    .catch((err) => {
+      for (const entry of siteRegistry) {
+        const key = normalizeSiteUrl(entry.url);
+        if (siteByUrl.has(key)) continue;
+        const created = await prisma.site.create({
+          data: {
+            name: entry.name, url: entry.url, status: "unknown",
+            upstreamPrice: 1, quotaDisplayType: "USD",
+            usdExchangeRate: 7, groupRatios: "{}",
+          },
+          select: { id: true, name: true, url: true },
+        });
+        siteByUrl.set(key, created);
+      }
+
+      const sites = [...siteByUrl.values()].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      syncState.total = sites.length;
+
+      const CONCURRENCY = 10;
+      for (let i = 0; i < sites.length; i += CONCURRENCY) {
+        const batch = sites.slice(i, i + CONCURRENCY);
+        const results = await Promise.all(
+          batch.map((site) => refreshSite(prisma, site))
+        );
+        for (const r of results) {
+          syncState.completed++;
+          syncState.current = r.name;
+          if (r.error) syncState.failed++;
+          else syncState.ok++;
+          console.log(
+            `[sync] [${syncState.completed}/${syncState.total}] ${r.name} — ${r.error ? "❌ " + r.error : "✅ " + r.priceCount + " 模型"}`
+          );
+        }
+      }
+    } catch (err) {
       console.error("[sync] 错误:", err);
-      lastSyncResult = {
-        ...lastSyncResult!,
-        finishedAt: new Date().toISOString(),
-      };
-    })
-    .finally(() => {
-      syncRunning = false;
-    });
+    } finally {
+      syncState.running = false;
+      syncState.finishedAt = new Date().toISOString();
+      syncState.duration = `${Date.now() - startTime}ms`;
+      console.log(
+        `[sync] 完成: ${syncState.completed}/${syncState.total}, 成功 ${syncState.ok}, 失败 ${syncState.failed}, 耗时 ${syncState.duration}`
+      );
+    }
+  })();
 
   return NextResponse.json({
     ok: true,
@@ -71,13 +110,6 @@ export async function POST(request: Request) {
   });
 }
 
-export async function GET(request: Request) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    running: syncRunning,
-    lastSync: lastSyncResult,
-  });
+export async function GET() {
+  return NextResponse.json(syncState);
 }
