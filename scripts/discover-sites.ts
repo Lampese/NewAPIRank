@@ -544,7 +544,7 @@ async function importSites(validResults: ProbeResult[]) {
       }
 
       const name = extractSiteName(r.url, r.title);
-      await prisma.site.create({
+      const site = await prisma.site.create({
         data: {
           name,
           url: r.url,
@@ -557,9 +557,27 @@ async function importSites(validResults: ProbeResult[]) {
         },
       });
 
+      // 立即拉取价格数据写入
+      const pricing = await fetchPricing(r.url);
+      if (pricing.entries.length > 0) {
+        await prisma.price.createMany({
+          data: pricing.entries.map((entry) => ({
+            siteId: site.id,
+            modelName: entry.model_name,
+            quotaType: entry.quota_type ?? 0,
+            modelRatio: entry.model_ratio ?? 0,
+            completionRatio: entry.completion_ratio ?? 0,
+            cacheRatio: entry.cache_ratio ?? null,
+            createCacheRatio: entry.create_cache_ratio ?? null,
+            modelPrice: entry.model_price ?? 0,
+            enableGroups: JSON.stringify(entry.enable_groups ?? []),
+          })),
+        });
+      }
+
       existingUrls.add(normalized);
       imported++;
-      console.log(`  ✅ ${name} (${r.url}) — 已导入`);
+      console.log(`  ✅ ${name} (${r.url}) — 已导入 (${pricing.entries.length} 模型)`);
     }
 
     console.log(`\n导入完成: ${imported} 个新站点`);
