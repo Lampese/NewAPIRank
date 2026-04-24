@@ -34,7 +34,7 @@ import { fetchStatus, fetchPricing } from "@/lib/sync";
 const DEFAULT_QUERY = `(title="New API" || body="meta name=\\"generator\\" content=\\"new-api\\"") || (body="quota_display_type" && body="usd_exchange_rate" && body="quota_per_unit") || (body="pricing_version" && body="group_ratio" && body="usable_group")`;
 
 const MIN_MODEL_COUNT = 5;
-const PROBE_CONCURRENCY = 5;
+const PROBE_CONCURRENCY = 20;
 const FOFA_PAGE_SIZE = 100;
 const FOFA_PAGE_DELAY_MS = 1000;
 const DEFAULT_DATA_FILE = "data/fofa-results.json";
