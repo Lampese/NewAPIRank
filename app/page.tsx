@@ -44,8 +44,9 @@ export default async function Home() {
     onlineSites,
     totalOffers,
     topSites,
-    modelRows,
-    prices,
+    totalModels,
+    modelCoverage,
+    latestCheck,
   ] = await Promise.all([
     prisma.site.count(),
     prisma.site.count({ where: { status: "up" } }),
@@ -57,91 +58,27 @@ export default async function Home() {
         _count: { select: { prices: true } },
       },
     }),
-    prisma.price.findMany({
-      select: { modelName: true },
-    }),
-    prisma.price.findMany({
-      include: {
-        site: {
-          select: {
-            name: true,
-            url: true,
-            upstreamPrice: true,
-            quotaDisplayType: true,
-            usdExchangeRate: true,
-            groupRatios: true,
-          },
-        },
-      },
-      orderBy: { modelRatio: "asc" },
+    prisma.price
+      .findMany({ select: { modelName: true }, distinct: ["modelName"] })
+      .then((rows) => rows.length),
+    prisma.price
+      .groupBy({
+        by: ["modelName"],
+        _count: { modelName: true },
+        orderBy: { _count: { modelName: "desc" } },
+        take: 5,
+      })
+      .then((rows) =>
+        rows.map((r) => ({ modelName: r.modelName, count: r._count.modelName }))
+      ),
+    prisma.check.findFirst({
+      orderBy: { checkedAt: "desc" },
+      select: { checkedAt: true },
     }),
   ]);
 
-  const groupedPrices: Record<
-    string,
-    {
-      siteName: string;
-      siteId: string;
-      siteUrl: string;
-      quotaType: number;
-      modelRatio: number;
-      completionRatio: number;
-      cacheRatio: number | null;
-      createCacheRatio: number | null;
-      modelPrice: number;
-      fetchedAt: string;
-      enableGroups: string[];
-      siteUpstreamPrice: number;
-      siteQuotaDisplayType: string;
-      siteUsdExchangeRate: number;
-      siteGroupRatios: Record<string, number>;
-    }[]
-  > = {};
-
-  for (const price of prices) {
-    if (!groupedPrices[price.modelName]) {
-      groupedPrices[price.modelName] = [];
-    }
-
-    groupedPrices[price.modelName].push({
-      siteName: price.site.name,
-      siteId: price.siteId,
-      siteUrl: price.site.url,
-      quotaType: price.quotaType,
-      modelRatio: price.modelRatio,
-      completionRatio: price.completionRatio,
-      cacheRatio: price.cacheRatio,
-      createCacheRatio: price.createCacheRatio,
-      modelPrice: price.modelPrice,
-      fetchedAt: price.fetchedAt.toISOString(),
-      enableGroups: JSON.parse(price.enableGroups || "[]"),
-      siteUpstreamPrice: price.site.upstreamPrice,
-      siteQuotaDisplayType: price.site.quotaDisplayType,
-      siteUsdExchangeRate: price.site.usdExchangeRate,
-      siteGroupRatios: JSON.parse(price.site.groupRatios || "{}"),
-    });
-  }
-
-  const models = Object.keys(groupedPrices).sort();
-
-  const modelCoverageMap = new Map<string, number>();
-  for (const row of modelRows) {
-    modelCoverageMap.set(row.modelName, (modelCoverageMap.get(row.modelName) ?? 0) + 1);
-  }
-
-  const modelCoverage = [...modelCoverageMap.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 5)
-    .map(([modelName, count]) => ({ modelName, count }));
-
-  const totalModels = modelCoverageMap.size;
   const maxCoverage = modelCoverage[0]?.count ?? 1;
-  const latestUpdatedAt = prices.reduce<Date | null>((latest, price) => {
-    if (!latest || price.fetchedAt > latest) {
-      return price.fetchedAt;
-    }
-    return latest;
-  }, null);
+  const latestUpdatedAt = latestCheck?.checkedAt ?? null;
 
   const heroStats = [
     {
@@ -350,10 +287,6 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="mt-8 motion-fade-up motion-delay-2">
-        <PriceTable data={groupedPrices} models={models} />
       </section>
     </div>
   );
