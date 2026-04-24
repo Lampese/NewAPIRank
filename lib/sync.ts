@@ -203,9 +203,15 @@ export async function refreshAllSites(prisma: PrismaClient) {
     return { results: [], message: "No sites configured." };
   }
 
-  const results = await Promise.all(
-    sites.map((site) => refreshSite(prisma, site))
-  );
+  const CONCURRENCY = 10;
+  const results: RefreshResult[] = [];
+  for (let i = 0; i < sites.length; i += CONCURRENCY) {
+    const batch = sites.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(
+      batch.map((site) => refreshSite(prisma, site))
+    );
+    results.push(...batchResults);
+  }
 
   return { results };
 }
