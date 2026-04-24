@@ -51,7 +51,6 @@ export default async function Home() {
     prisma.site.count({ where: { status: "up" } }),
     prisma.price.count(),
     prisma.site.findMany({
-      take: 100,
       orderBy: [{ prices: { _count: "desc" } }, { status: "asc" }],
       include: {
         _count: { select: { prices: true } },
