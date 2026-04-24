@@ -1,0 +1,29 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=file:/data/prod.db
+    volumes:
+      - db-data:/data
+    restart: unless-stopped
+
+  cron:
+    image: alpine:3.20
+    depends_on:
+      - web
+    env_file:
+      - .env
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "0 * * * * wget -qO- --header='Authorization: Bearer $${CRON_SECRET}' --post-data='' http://web:3000/api/cron/sync-prices > /proc/1/fd/1 2>&1" | crontab -
+        crond -f -l 2
+    restart: unless-stopped
+
+volumes:
+  db-data:

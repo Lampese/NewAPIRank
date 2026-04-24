@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id              String   @id @default(cuid())
+  name            String
+  url             String   @unique
+  version         String?
+  status          String   @default("unknown") // up / down / unknown
+  upstreamPrice   Float    @default(1)
+  quotaDisplayType String  @default("USD")
+  usdExchangeRate Float    @default(7)
+  groupRatios     String   @default("{}") // JSON map: group -> ratio
+  isPaid          Boolean  @default(false)
+  rank            Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  checks Check[]
+  prices Price[]
+}
+
+model Check {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  status    String
+  latency   Int
+  checkedAt DateTime @default(now())
+
+  @@index([siteId, checkedAt])
+}
+
+model Price {
+  id              String   @id @default(cuid())
+  siteId          String
+  site            Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  modelName       String
+  quotaType       Int      @default(0)    // 0=per-token, 1=per-request
+  modelRatio      Float    @default(0)    // input price ratio
+  completionRatio Float    @default(0)    // output/input multiplier
+  cacheRatio      Float?                  // cache read ratio (optional)
+  createCacheRatio Float?                 // cache write ratio (optional)
+  modelPrice      Float    @default(0)    // fixed price (quota_type=1)
+  enableGroups    String   @default("[]") // JSON array as string
+  fetchedAt       DateTime @default(now())
+
+  @@unique([siteId, modelName])
+  @@index([modelName])
+  @@index([siteId])
+}

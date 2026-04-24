@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<div align="center">
 
-## Getting Started
+# NewAPI Rank
 
-First, run the development server:
+**Real-time monitoring & price comparison for NewAPI sites**
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FLampese%2FNewAPIRank&env=DATABASE_URL,INTERNAL_API_KEY&envDescription=Database%20URL%20and%20internal%20API%20key&project-name=newapi-rank)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+[English](#features) | [中文](#特性)
+
+</div>
+
+---
+
+## Features
+
+- **Real-time Monitoring** — Track availability, latency, and uptime of NewAPI instances
+- **Price Comparison** — Compare model pricing across sites, find the cheapest option
+- **Site Rankings** — Discover top NewAPI sites ranked by performance
+- **REST API** — Full public API for programmatic access
+- **Dark Mode** — Beautiful dark-first UI with light mode support
+- **Self-hostable** — One-click deploy to Vercel, or run anywhere with Node.js
+
+## 特性
+
+- **实时监控** — 追踪 NewAPI 站点的可用性、延迟和在线率
+- **价格对比** — 横向对比各站点模型定价，找到最便宜的选择
+- **站点排名** — 按性能排名的 NewAPI 站点
+- **REST API** — 完整的公开 API 接口
+- **暗黑模式** — 精美的暗色优先 UI
+- **可自部署** — 一键部署到 Vercel，或在任何 Node.js 环境运行
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 15 (App Router) |
+| UI | Tailwind CSS + shadcn/ui |
+| Charts | Recharts |
+| ORM | Prisma (SQLite / PostgreSQL) |
+| Deploy | Vercel / Any Node.js host |
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone
+git clone https://github.com/Lampese/NewAPIRank.git
+cd NewAPIRank
+
+# Install dependencies
+pnpm install
+
+# Setup database
+cp .env.example .env
+npx prisma db push
+
+# Seed demo data (optional)
+npx tsx prisma/seed.ts
+
+# Start dev server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Public Endpoints
 
-## Learn More
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sites` | List all sites (paginated) |
+| GET | `/api/sites/:id` | Site details with models & prices |
+| GET | `/api/sites/:id/checks` | Check history |
+| GET | `/api/pricing/:modelId` | Price comparison for a model |
+| GET | `/api/models` | All tracked models |
+| GET | `/api/stats` | Overall statistics |
 
-To learn more about Next.js, take a look at the following resources:
+### Data Push API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+For feeding data from your own collector:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+curl -X POST https://your-domain/api/internal/checks \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"checks": [{"siteUrl": "https://example.com", "status": "up", "latency": 120}]}'
+```
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Vercel (Recommended)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Click the "Deploy with Vercel" button above, set environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `INTERNAL_API_KEY` | Secret key for data push API |
+
+### Self-hosted
+
+```bash
+pnpm install
+pnpm build
+pnpm start
+```
+
+## Contributing
+
+PRs welcome! Please open an issue first to discuss what you'd like to change.
+
+## License
+
+[MIT](LICENSE)
