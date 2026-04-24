@@ -37,6 +37,9 @@ services:
       - -c
       - |
         echo "7 */6 * * * wget -qO- --header='Authorization: Bearer $${CRON_SECRET}' --post-data='' http://web:3000/api/cron/sync-prices > /proc/1/fd/1 2>&1" | crontab -
+        echo "*/1 * * * * wget -qO- http://web:3000/api/cron/sync-prices 2>/dev/null | head -c 200 > /proc/1/fd/1" >> /var/spool/cron/crontabs/root
+        # 启动后等 web 就绪，触发首次同步
+        (sleep 10 && wget -qO- --header="Authorization: Bearer $${CRON_SECRET}" --post-data='' http://web:3000/api/cron/sync-prices > /proc/1/fd/1 2>&1) &
         crond -f -l 2
     restart: unless-stopped
 
