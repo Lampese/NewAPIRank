@@ -212,32 +212,36 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="mt-8 grid gap-6 grid-cols-[minmax(0,1fr)_260px]">
+          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div className="overflow-hidden rounded-[28px] border border-border/70 bg-card/88 shadow-[0_24px_90px_-54px_rgba(34,211,238,0.7)]">
-              <div className="flex flex-col gap-3 border-b border-border/70 px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex flex-col gap-3 border-b border-border/70 px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
                     站点
                     </div>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+                    <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-foreground">
                     站点大全
                     </h2>
                   </div>
+                  <div className="text-xs text-muted-foreground">
+                    共 {topSites.length} 个站点
+                  </div>
               </div>
 
-              <Table className="min-w-[760px]">
+              <div className="max-h-[420px] overflow-y-auto">
+              <Table className="min-w-[660px]">
                 <TableHeader>
-                  <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">
-                    <TableHead className="px-6 py-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  <TableRow className="border-border/70 bg-background/30 hover:bg-background/30 sticky top-0 z-10">
+                    <TableHead className="px-5 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       节点
                     </TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <TableHead className="text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       状态
                     </TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <TableHead className="text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       模型数
                     </TableHead>
-                    <TableHead className="px-6 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    <TableHead className="px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       版本
                     </TableHead>
                   </TableRow>
@@ -251,8 +255,8 @@ export default async function Home() {
                         index < 3 && "bg-primary/[0.04]"
                       )}
                     >
-                      <TableCell className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                      <TableCell className="px-5 py-3">
+                        <div className="flex items-center gap-2.5">
                       <div>
                         <div className="flex items-center gap-2">
                           <Link
@@ -270,7 +274,7 @@ export default async function Home() {
                                 </Badge>
                               )}
                             </div>
-                            <div className="mt-1 text-xs text-muted-foreground">
+                            <div className="mt-0.5 text-xs text-muted-foreground truncate max-w-[280px]">
                               {site.url}
                             </div>
                           </div>
@@ -282,7 +286,7 @@ export default async function Home() {
                       <TableCell className="text-right text-sm text-muted-foreground">
                         {site._count.prices}
                       </TableCell>
-                      <TableCell className="px-6 text-right text-sm text-muted-foreground">
+                      <TableCell className="px-5 text-right text-sm text-muted-foreground">
                         {site.version ?? "--"}
                       </TableCell>
                     </TableRow>
@@ -299,6 +303,7 @@ export default async function Home() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </div>
 
             <div className="observatory-panel p-5">
