@@ -66,7 +66,6 @@ export default async function Home() {
         by: ["modelName"],
         _count: { modelName: true },
         orderBy: { _count: { modelName: "desc" } },
-        take: 5,
       })
       .then((rows) =>
         rows.map((r) => ({ modelName: r.modelName, count: r._count.modelName }))
@@ -287,6 +286,10 @@ export default async function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="mt-8 motion-fade-up motion-delay-2">
+        <PriceTable models={modelCoverage.map((m) => ({ model: m.modelName, count: m.count }))} />
       </section>
     </div>
   );

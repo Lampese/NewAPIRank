@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, TrendingDown, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Search, TrendingDown, X } from "lucide-react";
 import { ProviderIcon } from "@/components/provider-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,6 @@ type PriceEntry = {
   siteGroupRatios: Record<string, number>;
 };
 
-type PriceData = Record<string, PriceEntry[]>;
 type SortKey = "input" | "output" | "cacheRead" | "cacheWrite";
 type SortDirection = "asc" | "desc";
 
@@ -131,44 +130,47 @@ function SortHead({
 }
 
 export function PriceTable({
-  data,
   models,
 }: {
-  data: PriceData;
-  models: string[];
+  models: { model: string; count: number }[];
 }) {
-  const rankedModels = useMemo(
-    () =>
-      [...models]
-        .map((model) => ({
-          model,
-          count: data[model]?.length ?? 0,
-        }))
-        .sort(
-          (left, right) =>
-            right.count - left.count || left.model.localeCompare(right.model)
-        ),
-    [data, models]
-  );
-
   const [modelQuery, setModelQuery] = useState("");
-  const [selectedModel, setSelectedModel] = useState(rankedModels[0]?.model ?? "");
+  const [selectedModel, setSelectedModel] = useState(models[0]?.model ?? "");
   const [sortKey, setSortKey] = useState<SortKey>("input");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [entries, setEntries] = useState<PriceEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 按需加载选中模型的价格数据
+  useEffect(() => {
+    if (!selectedModel) return;
+
+    setLoading(true);
+    fetch(`/api/models/pricing?model=${encodeURIComponent(selectedModel)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setEntries(data.entries ?? []);
+      })
+      .catch(() => {
+        setEntries([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [selectedModel]);
 
   const normalizedQuery = modelQuery.trim().toLowerCase();
   const filteredModels = useMemo(
     () =>
       normalizedQuery === ""
-        ? rankedModels
-        : rankedModels.filter(({ model }) =>
+        ? models
+        : models.filter(({ model }) =>
             model.toLowerCase().includes(normalizedQuery)
           ),
-    [normalizedQuery, rankedModels]
+    [normalizedQuery, models]
   );
 
   const provider = getProvider(selectedModel);
-  const entries = data[selectedModel] ?? [];
 
   const priceRows = useMemo(() => {
     const rows = entries.flatMap((entry) =>
@@ -196,12 +198,8 @@ export function PriceTable({
       if (leftValue == null && rightValue == null) {
         return left.presentation.primaryCny - right.presentation.primaryCny;
       }
-      if (leftValue == null) {
-        return 1;
-      }
-      if (rightValue == null) {
-        return -1;
-      }
+      if (leftValue == null) return 1;
+      if (rightValue == null) return -1;
 
       const delta = leftValue - rightValue;
       return sortDirection === "asc" ? delta : -delta;
@@ -210,14 +208,11 @@ export function PriceTable({
     return rows;
   }, [entries, sortDirection, sortKey]);
 
-  const quickModels = filteredModels;
-
   const handleSort = (nextKey: SortKey) => {
     if (sortKey === nextKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
       return;
     }
-
     setSortKey(nextKey);
     setSortDirection("asc");
   };
@@ -318,12 +313,12 @@ export function PriceTable({
               <TrendingDown className="size-3.5 text-primary" />
               当前排序：{sortLabel(sortKey)} {sortDirection === "asc" ? "升序" : "降序"}
             </span>
-            <span className="signal-chip">可比较报价：{priceRows.length} 条</span>
+            <span className="signal-chip">可比较报价：{loading ? "..." : priceRows.length} 条</span>
           </div>
 
-          {quickModels.length > 0 && (
+          {filteredModels.length > 0 && (
             <div className="flex flex-wrap gap-2 xl:col-span-2">
-              {quickModels.map(({ model, count }) => (
+              {filteredModels.slice(0, 50).map(({ model, count }) => (
                 <button
                   key={model}
                   type="button"
@@ -343,7 +338,7 @@ export function PriceTable({
             </div>
           )}
 
-          {normalizedQuery !== "" && quickModels.length === 0 && (
+          {normalizedQuery !== "" && filteredModels.length === 0 && (
             <div className="xl:col-span-2">
               <Button
                 type="button"
@@ -359,7 +354,12 @@ export function PriceTable({
         </div>
       </div>
 
-      {priceRows.length === 0 ? (
+      {loading ? (
+        <div className="observatory-panel flex min-h-72 flex-col items-center justify-center px-6 py-16 text-center">
+          <Loader2 className="size-8 animate-spin text-primary" />
+          <p className="mt-4 text-sm text-muted-foreground">加载价格数据...</p>
+        </div>
+      ) : priceRows.length === 0 ? (
         <div className="observatory-panel flex min-h-72 flex-col items-center justify-center px-6 py-16 text-center">
           <p className="text-lg font-medium text-foreground">暂无该模型的定价数据</p>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
