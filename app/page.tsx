@@ -51,6 +51,7 @@ export default async function Home() {
     prisma.site.count({ where: { status: "up" } }),
     prisma.price.count(),
     prisma.site.findMany({
+      where: { prices: { some: {} } },
       orderBy: [{ prices: { _count: "desc" } }, { status: "asc" }],
       include: {
         _count: { select: { prices: true } },
@@ -228,19 +229,19 @@ export default async function Home() {
               </div>
 
               <div className="max-h-[420px] overflow-y-auto">
-              <Table className="min-w-[660px]">
+              <Table>
                 <TableHeader>
                   <TableRow className="border-border/70 bg-background/30 hover:bg-background/30 sticky top-0 z-10">
-                    <TableHead className="px-5 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
+                    <TableHead className="w-[50%] px-5 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       节点
                     </TableHead>
-                    <TableHead className="text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
+                    <TableHead className="w-[15%] text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       状态
                     </TableHead>
-                    <TableHead className="text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
+                    <TableHead className="w-[15%] text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       模型数
                     </TableHead>
-                    <TableHead className="px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
+                    <TableHead className="w-[20%] px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
                       版本
                     </TableHead>
                   </TableRow>
@@ -255,29 +256,20 @@ export default async function Home() {
                       )}
                     >
                       <TableCell className="px-5 py-3">
-                        <div className="flex items-center gap-2.5">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Link
-                            href={`/site/${site.id}`}
-                                className="text-sm font-semibold text-foreground hover:text-primary"
-                              >
-                                {site.name}
-                              </Link>
-                              {site.isPaid && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-400/20 bg-amber-400/10 text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300"
-                                >
-                                  Boost
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="mt-0.5 text-xs text-muted-foreground truncate max-w-[280px]">
-                              {site.url}
-                            </div>
-                          </div>
-                        </div>
+                        <Link
+                          href={`/site/${site.id}`}
+                          className="text-sm font-semibold text-foreground hover:text-primary"
+                        >
+                          {site.name}
+                        </Link>
+                        {site.isPaid && (
+                          <Badge
+                            variant="outline"
+                            className="ml-2 border-amber-400/20 bg-amber-400/10 text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300"
+                          >
+                            Boost
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={site.status} />
