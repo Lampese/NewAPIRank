@@ -259,6 +259,12 @@ async function probeSite(entry: FOFAEntry): Promise<ProbeResult> {
       return result;
     }
 
+    // 检查自用模式
+    if (status.selfUseMode) {
+      result.reason = "自用模式";
+      return result;
+    }
+
     result.version = status.version;
     result.upstreamPrice = status.upstreamPrice;
     result.quotaDisplayType = status.quotaDisplayType;

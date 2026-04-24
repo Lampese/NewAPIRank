@@ -19,6 +19,7 @@ interface SiteStatus {
   upstreamPrice: number;
   quotaDisplayType: string;
   usdExchangeRate: number;
+  selfUseMode: boolean;
 }
 
 interface SitePricing {
@@ -61,6 +62,7 @@ export async function fetchStatus(url: string): Promise<SiteStatus> {
         Number.isFinite(usdExchangeRate) && usdExchangeRate > 0
           ? usdExchangeRate
           : 7,
+      selfUseMode: !!json?.data?.self_use_mode_enabled,
     };
   } catch {
     return {
@@ -70,6 +72,7 @@ export async function fetchStatus(url: string): Promise<SiteStatus> {
       upstreamPrice: 1,
       quotaDisplayType: "USD",
       usdExchangeRate: 7,
+      selfUseMode: false,
     };
   }
 }
