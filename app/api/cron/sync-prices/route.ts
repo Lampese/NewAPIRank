@@ -9,36 +9,75 @@ function verifyCronSecret(request: Request): boolean {
   return auth === `Bearer ${secret}`;
 }
 
+// 后台同步状态
+let syncRunning = false;
+let lastSyncResult: {
+  startedAt: string;
+  finishedAt?: string;
+  duration?: string;
+  sites?: number;
+  ok?: number;
+  failed?: number;
+} | null = null;
+
 export async function POST(request: Request) {
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const startTime = Date.now();
-
-  try {
-    const { results } = await refreshAllSites(prisma);
-    const duration = Date.now() - startTime;
-
+  if (syncRunning) {
     return NextResponse.json({
       ok: true,
-      duration: `${duration}ms`,
-      sites: results.length,
-      results: results.map((r) => ({
-        name: r.name,
-        status: r.status,
-        latency: r.latency,
-        prices: r.priceCount,
-        ...(r.error ? { error: r.error } : {}),
-      })),
+      message: "Sync already running",
+      lastSync: lastSyncResult,
     });
-  } catch (err) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: err instanceof Error ? err.message : String(err),
-      },
-      { status: 500 }
-    );
   }
+
+  // 立即返回，后台异步执行
+  syncRunning = true;
+  const startTime = Date.now();
+  lastSyncResult = { startedAt: new Date().toISOString() };
+
+  // 不 await，让它后台跑
+  refreshAllSites(prisma)
+    .then(({ results }) => {
+      const duration = Date.now() - startTime;
+      lastSyncResult = {
+        startedAt: lastSyncResult!.startedAt,
+        finishedAt: new Date().toISOString(),
+        duration: `${duration}ms`,
+        sites: results.length,
+        ok: results.filter((r) => r.status === "up").length,
+        failed: results.filter((r) => r.error).length,
+      };
+      console.log(
+        `[sync] 完成: ${results.length} 站, ${lastSyncResult.ok} 成功, ${lastSyncResult.failed} 失败, 耗时 ${lastSyncResult.duration}`
+      );
+    })
+    .catch((err) => {
+      console.error("[sync] 错误:", err);
+      lastSyncResult = {
+        ...lastSyncResult!,
+        finishedAt: new Date().toISOString(),
+      };
+    })
+    .finally(() => {
+      syncRunning = false;
+    });
+
+  return NextResponse.json({
+    ok: true,
+    message: "Sync started in background",
+  });
+}
+
+export async function GET(request: Request) {
+  if (!verifyCronSecret(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return NextResponse.json({
+    running: syncRunning,
+    lastSync: lastSyncResult,
+  });
 }
