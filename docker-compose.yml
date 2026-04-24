@@ -36,7 +36,7 @@ services:
     command:
       - -c
       - |
-        echo "0 * * * * wget -qO- --header='Authorization: Bearer $${CRON_SECRET}' --post-data='' http://web:3000/api/cron/sync-prices > /proc/1/fd/1 2>&1" | crontab -
+        echo "7 */6 * * * wget -qO- --header='Authorization: Bearer $${CRON_SECRET}' --post-data='' http://web:3000/api/cron/sync-prices > /proc/1/fd/1 2>&1" | crontab -
         crond -f -l 2
     restart: unless-stopped
 
