@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-# 自动迁移数据库（首次启动或 schema 变更时）
-npx prisma migrate deploy 2>/dev/null || npx prisma db push --skip-generate 2>/dev/null || true
+# 自动建表（根据 schema.prisma 同步数据库结构）
+npx prisma db push --skip-generate
 
 exec node server.js
