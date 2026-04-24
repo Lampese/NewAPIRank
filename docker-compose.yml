@@ -1,8 +1,23 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    environment:
+      - SITE_DOMAIN=${SITE_DOMAIN:-localhost}
+    depends_on:
+      - web
+    restart: unless-stopped
+
   web:
     build: .
-    ports:
-      - "80:3000"
+    expose:
+      - "3000"
     env_file:
       - .env
     environment:
@@ -27,3 +42,5 @@ services:
 
 volumes:
   db-data:
+  caddy-data:
+  caddy-config:
