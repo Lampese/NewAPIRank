@@ -20,20 +20,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
+# 不用 nextjs 用户了，直接 root 跑，避免所有权限问题
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 
-# 启动时自动迁移数据库
 COPY entrypoint.sh ./
-USER root
-RUN chmod +x entrypoint.sh && mkdir -p /data && chown nextjs:nodejs /data
-USER nextjs
+RUN chmod +x entrypoint.sh && mkdir -p /data
 
 EXPOSE 3000
 ENV PORT=3000

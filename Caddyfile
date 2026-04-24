@@ -1,3 +1,7 @@
 {$SITE_DOMAIN} {
 	reverse_proxy web:3000
 }
+
+:80 {
+	reverse_proxy web:3000
+}
