@@ -190,26 +190,29 @@ export function getDetectedRechargeCnyPerUsdRate(site: SitePricingContext) {
   const upstreamPrice = normalizePositiveFloat(site.upstreamPrice);
   const usdExchangeRate = normalizePositiveFloat(site.usdExchangeRate);
 
+  let rate = 0;
+
   switch (displayType) {
     case "CNY":
       if (upstreamPrice > 0 && usdExchangeRate > 0) {
-        return upstreamPrice * usdExchangeRate;
+        rate = upstreamPrice * usdExchangeRate;
+      } else if (usdExchangeRate > 0) {
+        rate = usdExchangeRate;
       }
-      if (usdExchangeRate > 0) {
-        return usdExchangeRate;
-      }
-      return 0;
+      break;
     case "USD":
       if (upstreamPrice > 0) {
-        return upstreamPrice;
+        rate = upstreamPrice;
+      } else if (usdExchangeRate > 0) {
+        rate = usdExchangeRate;
       }
-      if (usdExchangeRate > 0) {
-        return usdExchangeRate;
-      }
-      return 0;
+      break;
     default:
-      return 0;
+      break;
   }
+
+  // fallback: 如果算不出来，用默认汇率 7
+  return rate > 0 ? rate : 7;
 }
 
 function convertUSDToCNY(priceUSD: number | null, rate: number) {

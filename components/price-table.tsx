@@ -396,12 +396,13 @@ export function PriceTable({
             <div className="text-sm text-muted-foreground">价格列标题可直接点击排序。</div>
           </div>
 
+          <div className="overflow-x-auto">
           <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
             <colgroup>
               <col style={{ width: "40px" }} />
-              <col style={{ width: "140px" }} />
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "60px" }} />
+              <col style={{ width: "160px" }} />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "56px" }} />
               <col />
               <col />
               <col />
@@ -542,6 +543,7 @@ export function PriceTable({
               </div>
             </div>
           )}
+          </div>{/* end overflow-x-auto */}
         </div>
       )}
     </div>
