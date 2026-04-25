@@ -1,34 +1,18 @@
-import Link from "next/link";
 import {
   Activity,
   Clock3,
   Layers3,
-  Radar,
   Sparkles,
 } from "lucide-react";
 import { PriceTable } from "@/components/price-table";
+import { SiteTable } from "@/components/site-table";
+import { ModelCoverage } from "@/components/model-coverage";
 import { prisma } from "@/lib/db";
-import { ProviderIcon } from "@/components/provider-icon";
-import { StatusBadge } from "@/components/status-badge";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { getProvider } from "@/lib/providers";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 function formatLatestUpdatedAt(value: Date | null) {
-  if (!value) {
-    return "--";
-  }
-
+  if (!value) return "--";
   return new Intl.DateTimeFormat("zh-CN", {
     month: "2-digit",
     day: "2-digit",
@@ -39,44 +23,37 @@ function formatLatestUpdatedAt(value: Date | null) {
 }
 
 export default async function Home() {
-  const [
-    totalSites,
-    onlineSites,
-    totalOffers,
-    topSites,
-    totalModels,
-    modelCoverage,
-    latestCheck,
-  ] = await Promise.all([
-    prisma.site.count(),
-    prisma.site.count({ where: { status: "up" } }),
-    prisma.price.count(),
-    prisma.site.findMany({
-      where: { prices: { some: {} } },
-      orderBy: [{ prices: { _count: "desc" } }, { status: "asc" }],
-      include: {
-        _count: { select: { prices: true } },
-      },
-    }),
-    prisma.price
-      .findMany({ select: { modelName: true }, distinct: ["modelName"] })
-      .then((rows) => rows.length),
-    prisma.price
-      .groupBy({
-        by: ["modelName"],
-        _count: { modelName: true },
-        orderBy: { _count: { modelName: "desc" } },
-      })
-      .then((rows) =>
-        rows.map((r) => ({ modelName: r.modelName, count: r._count.modelName }))
-      ),
-    prisma.check.findFirst({
-      orderBy: { checkedAt: "desc" },
-      select: { checkedAt: true },
-    }),
-  ]);
+  const [totalSites, onlineSites, totalOffers, totalModels, topModelCount, modelList, latestCheck] =
+    await Promise.all([
+      prisma.site.count(),
+      prisma.site.count({ where: { status: "up" } }),
+      prisma.price.count(),
+      prisma.price
+        .findMany({ select: { modelName: true }, distinct: ["modelName"] })
+        .then((r) => r.length),
+      prisma.price
+        .groupBy({
+          by: ["modelName"],
+          _count: { modelName: true },
+          orderBy: { _count: { modelName: "desc" } },
+          take: 1,
+        })
+        .then((r) => r[0]?._count.modelName ?? 1),
+      prisma.price
+        .groupBy({
+          by: ["modelName"],
+          _count: { modelName: true },
+          orderBy: { _count: { modelName: "desc" } },
+        })
+        .then((rows) =>
+          rows.map((r) => ({ model: r.modelName, count: r._count.modelName }))
+        ),
+      prisma.check.findFirst({
+        orderBy: { checkedAt: "desc" },
+        select: { checkedAt: true },
+      }),
+    ]);
 
-  const maxCoverage = modelCoverage[0]?.count ?? 1;
   const latestUpdatedAt = latestCheck?.checkedAt ?? null;
 
   const heroStats = [
@@ -148,148 +125,15 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div className="overflow-hidden rounded-[28px] border border-border/70 bg-card/88 shadow-[0_24px_90px_-54px_rgba(34,211,238,0.7)]">
-              <div className="flex flex-col gap-3 border-b border-border/70 px-6 py-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                    站点
-                    </div>
-                    <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-foreground">
-                    站点大全
-                    </h2>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    共 {topSites.length} 个站点
-                  </div>
-              </div>
-
-              <div className="max-h-[420px] overflow-y-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/70 bg-background/30 hover:bg-background/30 sticky top-0 z-10">
-                    <TableHead className="w-[50%] px-5 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
-                      节点
-                    </TableHead>
-                    <TableHead className="w-[15%] text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
-                      状态
-                    </TableHead>
-                    <TableHead className="w-[15%] text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
-                      模型数
-                    </TableHead>
-                    <TableHead className="w-[20%] px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground bg-background/80 backdrop-blur-sm">
-                      版本
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topSites.map((site, index) => (
-                    <TableRow
-                      key={site.id}
-                      className={cn(
-                        "border-border/60 hover:bg-background/35",
-                        index < 3 && "bg-primary/[0.04]"
-                      )}
-                    >
-                      <TableCell className="px-5 py-3">
-                        <Link
-                          href={`/site/${site.id}`}
-                          className="text-sm font-semibold text-foreground hover:text-primary"
-                        >
-                          {site.name}
-                        </Link>
-                        {site.isPaid && (
-                          <Badge
-                            variant="outline"
-                            className="ml-2 border-amber-400/20 bg-amber-400/10 text-[10px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300"
-                          >
-                            Boost
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={site.status} />
-                      </TableCell>
-                      <TableCell className="text-right text-sm text-muted-foreground">
-                        {site._count.prices}
-                      </TableCell>
-                      <TableCell className="px-5 text-right text-sm text-muted-foreground">
-                        {site.version ?? "--"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {topSites.length === 0 && (
-                    <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-28 text-center text-sm text-muted-foreground"
-                  >
-                        暂无站点数据
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-              </div>
-            </div>
-
-            <div className="observatory-panel p-5">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                <Radar className="size-3.5" />
-                模型
-              </div>
-              <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
-                模型覆盖
-              </h2>
-
-              <div className="mt-5 space-y-3">
-                {modelCoverage.map((item) => {
-                  const provider = getProvider(item.modelName);
-                  return (
-                    <div key={item.modelName}>
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <span
-                            className="inline-flex size-9 shrink-0 items-center justify-center rounded-2xl border border-border/70 bg-background/40"
-                            style={{ color: provider.color }}
-                          >
-                            <ProviderIcon modelId={item.modelName} className="size-4.5" />
-                          </span>
-                          <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-foreground">
-                              {item.modelName}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {provider.name}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right text-sm font-semibold text-foreground">
-                          {item.count}
-                        </div>
-                      </div>
-                      <div className="mt-3 h-2 rounded-full bg-background/55">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-primary via-cyan-300 to-emerald-300"
-                          style={{ width: `${(item.count / maxCoverage) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                {modelCoverage.length === 0 && (
-                  <div className="rounded-[24px] border border-dashed border-border/70 bg-background/20 px-4 py-8 text-center text-sm text-muted-foreground">
-                    暂无模型覆盖数据
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <SiteTable />
+            <ModelCoverage maxCoverage={topModelCount} />
           </div>
         </div>
       </section>
 
       <section className="mt-8 motion-fade-up motion-delay-2">
-        <PriceTable models={modelCoverage.map((m) => ({ model: m.modelName, count: m.count }))} />
+        <PriceTable models={modelList} />
       </section>
     </div>
   );
