@@ -93,7 +93,7 @@ export function SiteTable() {
         </div>
       </div>
 
-      <div>
+      <div className="flex-1 overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">
