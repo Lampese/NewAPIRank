@@ -49,9 +49,11 @@ model Price {
   createCacheRatio Float?                 // cache write ratio (optional)
   modelPrice      Float    @default(0)    // fixed price (quota_type=1)
   enableGroups    String   @default("[]") // JSON array as string
+  computedPriceCny Float   @default(0)    // pre-computed input price in CNY/1M tokens
   fetchedAt       DateTime @default(now())
 
   @@unique([siteId, modelName])
   @@index([modelName])
   @@index([siteId])
+  @@index([modelName, computedPriceCny])
 }

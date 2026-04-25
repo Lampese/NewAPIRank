@@ -154,6 +154,7 @@ export function PriceTable({
       model: selectedModel,
       page: String(pricePage),
       size: String(PAGE_SIZE),
+      sort: sortDirection,
     });
     fetch(`/api/models/pricing?${params}`)
       .then((res) => res.json())
@@ -168,7 +169,7 @@ export function PriceTable({
       .finally(() => {
         setLoading(false);
       });
-  }, [selectedModel, pricePage]);
+  }, [selectedModel, pricePage, sortDirection]);
 
   const normalizedQuery = modelQuery.trim().toLowerCase();
   const filteredModels = useMemo(
@@ -184,7 +185,7 @@ export function PriceTable({
   const provider = getProvider(selectedModel);
 
   const priceRows = useMemo(() => {
-    const rows = entries.flatMap((entry) =>
+    return entries.flatMap((entry) =>
       getEnabledGroups(entry.enableGroups).map((group) => ({
         entry,
         group,
@@ -201,36 +202,16 @@ export function PriceTable({
         ),
       }))
     );
+  }, [entries]);
 
-    rows.sort((left, right) => {
-      const leftValue = sortValue(left, sortKey);
-      const rightValue = sortValue(right, sortKey);
-
-      if (leftValue == null && rightValue == null) {
-        return left.presentation.primaryCny - right.presentation.primaryCny;
-      }
-      if (leftValue == null) return 1;
-      if (rightValue == null) return -1;
-
-      const delta = leftValue - rightValue;
-      return sortDirection === "asc" ? delta : -delta;
-    });
-
-    return rows;
-  }, [entries, sortDirection, sortKey]);
-
-  // 模型变化时重置分页
+  // 模型或排序变化时重置分页
   useEffect(() => {
     setPricePage(1);
-  }, [selectedModel]);
+  }, [selectedModel, sortDirection]);
 
-  const handleSort = (nextKey: SortKey) => {
-    if (sortKey === nextKey) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(nextKey);
-    setSortDirection("asc");
+  const handleSort = (_nextKey: SortKey) => {
+    // 排序由数据库处理，只切换升降序
+    setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
   };
 
   return (

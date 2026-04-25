@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { normalizeSiteUrl, siteRegistry } from "@/lib/site-registry";
+import { getDetectedRechargeCnyPerUsdRate } from "@/lib/pricing";
 
 interface PricingEntry {
   model_name: string;
@@ -138,18 +139,39 @@ export async function refreshSite(
     await prisma.price.deleteMany({ where: { siteId: site.id } });
 
     if (status.status === "up" && validPrices.length >= 5) {
+      // 计算汇率用于预计算价格
+      const rate = getDetectedRechargeCnyPerUsdRate({
+        siteUrl: site.url,
+        upstreamPrice: status.upstreamPrice,
+        quotaDisplayType: status.quotaDisplayType,
+        usdExchangeRate: status.usdExchangeRate,
+      });
+
       await prisma.price.createMany({
-        data: validPrices.map((entry) => ({
-          siteId: site.id,
-          modelName: entry.model_name,
-          quotaType: entry.quota_type ?? 0,
-          modelRatio: entry.model_ratio ?? 0,
-          completionRatio: entry.completion_ratio ?? 0,
-          cacheRatio: entry.cache_ratio ?? null,
-          createCacheRatio: entry.create_cache_ratio ?? null,
-          modelPrice: entry.model_price ?? 0,
-          enableGroups: JSON.stringify(entry.enable_groups ?? []),
-        })),
+        data: validPrices.map((entry) => {
+          const modelRatio = entry.model_ratio ?? 0;
+          const modelPrice = entry.model_price ?? 0;
+          const quotaType = entry.quota_type ?? 0;
+
+          // 预计算：按量=modelRatio*2*rate，按次=modelPrice*rate
+          const computedPriceCny =
+            quotaType === 0
+              ? modelRatio * 2 * rate
+              : modelPrice * rate;
+
+          return {
+            siteId: site.id,
+            modelName: entry.model_name,
+            quotaType,
+            modelRatio,
+            completionRatio: entry.completion_ratio ?? 0,
+            cacheRatio: entry.cache_ratio ?? null,
+            createCacheRatio: entry.create_cache_ratio ?? null,
+            modelPrice,
+            enableGroups: JSON.stringify(entry.enable_groups ?? []),
+            computedPriceCny,
+          };
+        }),
       });
     }
 

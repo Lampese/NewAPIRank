@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const model = searchParams.get("model") ?? "";
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
   const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "20", 10)));
+  const sort = searchParams.get("sort") ?? "asc";
 
   if (!model) {
     return NextResponse.json(
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   const where = { modelName: model, site: { status: "up" } };
+  const orderDir = sort === "desc" ? "desc" : "asc";
 
   const [total, prices] = await Promise.all([
     prisma.price.count({ where }),
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { modelRatio: "asc" },
+      orderBy: { computedPriceCny: orderDir },
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
@@ -51,6 +53,7 @@ export async function GET(request: NextRequest) {
     cacheRatio: price.cacheRatio,
     createCacheRatio: price.createCacheRatio,
     modelPrice: price.modelPrice,
+    computedPriceCny: price.computedPriceCny,
     fetchedAt: price.fetchedAt.toISOString(),
     enableGroups: JSON.parse(price.enableGroups || "[]"),
     siteUpstreamPrice: price.site.upstreamPrice,
