@@ -93,7 +93,7 @@ export function SiteTable() {
         </div>
       </div>
 
-      <div className={cn("transition-opacity", loading && "opacity-50")}>
+      <div>
         <Table>
           <TableHeader>
             <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">

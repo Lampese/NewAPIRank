@@ -84,7 +84,7 @@ export function ModelCoverage({
         />
       </div>
 
-      <div className={cn("mt-4 space-y-2.5 transition-opacity", loading && "opacity-50")}>
+      <div className="mt-4 space-y-2.5">
         {data?.models.map((item) => {
           const provider = getProvider(item.modelName);
           return (
