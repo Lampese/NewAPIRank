@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("q") ?? "";
 
   const where = {
+    status: "up",
     prices: { some: {} },
     ...(search
       ? {
