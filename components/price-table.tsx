@@ -386,13 +386,13 @@ export function PriceTable({
                 <TableHead className="w-10 px-3 py-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   #
                 </TableHead>
-                <TableHead className="px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="w-36 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   站点
                 </TableHead>
-                <TableHead className="w-24 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="w-20 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   分组
                 </TableHead>
-                <TableHead className="w-16 px-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="w-14 px-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   模式
                 </TableHead>
                 <TableHead className="w-28 text-right">

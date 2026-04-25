@@ -34,7 +34,7 @@ export function ModelCoverage({
   const fetchModels = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), size: "10" });
+      const params = new URLSearchParams({ page: String(page), size: "30" });
       if (search) params.set("q", search);
       const res = await fetch(`/api/models/list?${params}`);
       const json = await res.json();
