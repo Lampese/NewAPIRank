@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ArrowUpDown, Loader2, Search, TrendingDown, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Loader2, Search, TrendingDown, X } from "lucide-react";
 import { ProviderIcon } from "@/components/provider-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,6 +208,20 @@ export function PriceTable({
     return rows;
   }, [entries, sortDirection, sortKey]);
 
+  const PAGE_SIZE = 20;
+  const [pricePage, setPricePage] = useState(1);
+
+  const totalPricePages = Math.ceil(priceRows.length / PAGE_SIZE);
+  const pagedPriceRows = priceRows.slice(
+    (pricePage - 1) * PAGE_SIZE,
+    pricePage * PAGE_SIZE
+  );
+
+  // 排序或模型变化时重置分页
+  useEffect(() => {
+    setPricePage(1);
+  }, [selectedModel, sortKey, sortDirection]);
+
   const handleSort = (nextKey: SortKey) => {
     if (sortKey === nextKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
@@ -380,19 +394,29 @@ export function PriceTable({
             <div className="text-sm text-muted-foreground">价格列标题可直接点击排序。</div>
           </div>
 
-          <Table>
+          <table className="w-full text-sm" style={{ tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: "40px" }} />
+              <col style={{ width: "140px" }} />
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "60px" }} />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup>
             <TableHeader>
               <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">
-                <TableHead className="w-10 px-3 py-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="px-3 py-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   #
                 </TableHead>
-                <TableHead className="w-36 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   站点
                 </TableHead>
-                <TableHead className="w-20 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   分组
                 </TableHead>
-                <TableHead className="w-14 px-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="px-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   模式
                 </TableHead>
                 <TableHead className="w-28 text-right">
@@ -434,18 +458,20 @@ export function PriceTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {priceRows.map(({ entry, group, presentation }, index) => (
+              {pagedPriceRows.map(({ entry, group, presentation }, index) => {
+                const globalIndex = (pricePage - 1) * PAGE_SIZE + index;
+                return (
                 <TableRow
-                  key={`${entry.siteId}-${group}-${index}`}
+                  key={`${entry.siteId}-${group}-${globalIndex}`}
                   className={cn(
                     "border-border/60 hover:bg-background/35",
-                    index === 0 && "bg-primary/[0.04]"
+                    globalIndex === 0 && "bg-primary/[0.04]"
                   )}
                 >
                   <TableCell className="px-3 text-center text-sm text-muted-foreground">
-                    {String(index + 1).padStart(2, "0")}
+                    {String(globalIndex + 1).padStart(2, "0")}
                   </TableCell>
-                  <TableCell className="px-3 py-3">
+                  <TableCell className="px-3 py-3 truncate">
                     <Link
                       href={`/site/${entry.siteId}`}
                       className="text-sm font-semibold text-foreground hover:text-primary"
@@ -484,9 +510,36 @@ export function PriceTable({
                       : formatCny(presentation.requestCny)}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
-          </Table>
+          </table>
+
+          {totalPricePages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/70 px-5 py-3">
+              <div className="text-xs text-muted-foreground">
+                第 {pricePage}/{totalPricePages} 页，共 {priceRows.length} 条
+              </div>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  disabled={pricePage <= 1}
+                  onClick={() => setPricePage((p) => p - 1)}
+                  className="inline-flex size-8 items-center justify-center rounded-lg border border-border/70 bg-background/40 text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground disabled:opacity-30"
+                >
+                  <ChevronLeft className="size-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={pricePage >= totalPricePages}
+                  onClick={() => setPricePage((p) => p + 1)}
+                  className="inline-flex size-8 items-center justify-center rounded-lg border border-border/70 bg-background/40 text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground disabled:opacity-30"
+                >
+                  <ChevronRight className="size-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
