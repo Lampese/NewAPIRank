@@ -59,7 +59,7 @@ export function ModelCoverage({
   }, [searchInput]);
 
   return (
-    <div className="observatory-panel flex flex-col overflow-hidden p-5" style={{ maxHeight: "100%" }}>
+    <div className="flex h-full flex-col overflow-hidden observatory-panel p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">模型</div>

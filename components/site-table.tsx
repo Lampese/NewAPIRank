@@ -69,7 +69,7 @@ export function SiteTable() {
   }, [searchInput]);
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-border/70 bg-card/88 shadow-[0_24px_90px_-54px_rgba(34,211,238,0.7)]">
+    <div className="flex h-full flex-col overflow-hidden rounded-[28px] border border-border/70 bg-card/88 shadow-[0_24px_90px_-54px_rgba(34,211,238,0.7)]">
       <div className="flex flex-col gap-3 border-b border-border/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">站点</div>
