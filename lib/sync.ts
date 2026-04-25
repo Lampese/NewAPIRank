@@ -130,14 +130,14 @@ export async function refreshSite(
       },
     });
 
-    // 站点不在线或没有有效价格 → 清空价格，前端不再显示
+    // 站点不在线或没有足够有效价格 → 清空价格，前端不再显示
     const validPrices = pricing.entries.filter(
       (e) => e.model_name && ((e.model_ratio ?? 0) > 0 || (e.model_price ?? 0) > 0)
     );
 
     await prisma.price.deleteMany({ where: { siteId: site.id } });
 
-    if (status.status === "up" && validPrices.length > 0) {
+    if (status.status === "up" && validPrices.length >= 5) {
       await prisma.price.createMany({
         data: validPrices.map((entry) => ({
           siteId: site.id,
