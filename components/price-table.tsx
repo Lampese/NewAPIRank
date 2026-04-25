@@ -238,79 +238,43 @@ export function PriceTable({
       <div className="observatory-panel motion-fade-up p-5 sm:p-6">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div>
-            <div>
-              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                搜索模型
-              </label>
-              <div className="relative">
-                <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={modelQuery}
-                  onChange={(event) => setModelQuery(event.target.value)}
-                  placeholder="例如 gpt-4.1、gemini、claude"
-                  className="h-12 rounded-2xl border-border/70 bg-background/55 pr-11 pl-11"
-                />
-                {modelQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setModelQuery("")}
-                    className="absolute top-1/2 right-3 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
-                    aria-label="清除模型搜索"
-                  >
-                    <X className="size-4" />
-                  </button>
-                )}
-              </div>
+            <label className="mb-2 block text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+              搜索模型
+            </label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={modelQuery}
+                onChange={(event) => setModelQuery(event.target.value)}
+                placeholder="例如 gpt-4.1、gemini、claude"
+                className="h-12 rounded-2xl border-border/70 bg-background/55 pr-11 pl-11"
+              />
+              {modelQuery && (
+                <button
+                  type="button"
+                  onClick={() => setModelQuery("")}
+                  className="absolute top-1/2 right-3 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
+                  aria-label="清除模型搜索"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
             </div>
           </div>
 
           <div>
             <label className="mb-2 block text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-              模型选择
+              当前模型
             </label>
-            <Select
-              value={selectedModel}
-              onValueChange={(value) => {
-                if (value) {
-                  setSelectedModel(value);
-                }
-              }}
+            <div className="flex h-12 items-center gap-2 rounded-2xl border border-border/70 bg-background/55 px-4">
+              <span
+                className="inline-flex size-7 items-center justify-center rounded-xl border border-border/60 bg-background/50"
+                style={{ color: provider.color }}
               >
-              <SelectTrigger className="h-12 w-full rounded-2xl border-border/70 bg-background/55 px-4 text-sm">
-                <SelectValue placeholder="选择模型">
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      className="inline-flex size-7 items-center justify-center rounded-xl border border-border/60 bg-background/50"
-                      style={{ color: provider.color }}
-                    >
-                      <ProviderIcon modelId={selectedModel} className="size-4" />
-                    </span>
-                    <span>{selectedModel}</span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/70 bg-popover/98">
-                {filteredModels.map(({ model, count }) => {
-                  const modelProvider = getProvider(model);
-                  return (
-                    <SelectItem key={model} value={model}>
-                      <span className="inline-flex w-full items-center justify-between gap-4">
-                        <span className="inline-flex items-center gap-2">
-                          <span
-                            className="inline-flex size-7 items-center justify-center rounded-xl border border-border/60 bg-background/50"
-                            style={{ color: modelProvider.color }}
-                          >
-                            <ProviderIcon modelId={model} className="size-4" />
-                          </span>
-                          <span>{model}</span>
-                        </span>
-                        <span className="text-xs text-muted-foreground">{count}</span>
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                <ProviderIcon modelId={selectedModel} className="size-4" />
+              </span>
+              <span className="text-sm font-medium text-foreground">{selectedModel || "请从下方选择"}</span>
+            </div>
             {normalizedQuery !== "" && (
               <div className="mt-2 text-xs text-muted-foreground">
                 {filteredModels.length > 0
