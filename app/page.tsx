@@ -125,7 +125,7 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="mt-8 grid items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
             <SiteTable />
             <ModelCoverage maxCoverage={topModelCount} />
           </div>

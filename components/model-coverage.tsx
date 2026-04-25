@@ -59,7 +59,7 @@ export function ModelCoverage({
   }, [searchInput]);
 
   return (
-    <div className="observatory-panel p-5">
+    <div className="observatory-panel flex flex-col p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">模型</div>
@@ -84,7 +84,7 @@ export function ModelCoverage({
         />
       </div>
 
-      <div className="mt-4 space-y-2.5">
+      <div className="mt-4 flex-1 space-y-2.5 overflow-y-auto">
         {data?.models.map((item) => {
           const provider = getProvider(item.modelName);
           return (
