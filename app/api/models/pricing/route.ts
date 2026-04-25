@@ -6,6 +6,8 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const model = searchParams.get("model") ?? "";
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "20", 10)));
 
   if (!model) {
     return NextResponse.json(
@@ -14,23 +16,30 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const prices = await prisma.price.findMany({
-    where: { modelName: model },
-    include: {
-      site: {
-        select: {
-          id: true,
-          name: true,
-          url: true,
-          upstreamPrice: true,
-          quotaDisplayType: true,
-          usdExchangeRate: true,
-          groupRatios: true,
+  const where = { modelName: model, site: { status: "up" } };
+
+  const [total, prices] = await Promise.all([
+    prisma.price.count({ where }),
+    prisma.price.findMany({
+      where,
+      include: {
+        site: {
+          select: {
+            id: true,
+            name: true,
+            url: true,
+            upstreamPrice: true,
+            quotaDisplayType: true,
+            usdExchangeRate: true,
+            groupRatios: true,
+          },
         },
       },
-    },
-    orderBy: { modelRatio: "asc" },
-  });
+      orderBy: { modelRatio: "asc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
 
   const entries = prices.map((price) => ({
     siteName: price.site.name,
@@ -50,5 +59,12 @@ export async function GET(request: NextRequest) {
     siteGroupRatios: JSON.parse(price.site.groupRatios || "{}"),
   }));
 
-  return NextResponse.json({ model, entries });
+  return NextResponse.json({
+    model,
+    entries,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  });
 }

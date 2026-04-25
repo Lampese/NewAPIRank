@@ -140,16 +140,27 @@ export function PriceTable({
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [entries, setEntries] = useState<PriceEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pricePage, setPricePage] = useState(1);
+  const [priceTotal, setPriceTotal] = useState(0);
+  const [priceTotalPages, setPriceTotalPages] = useState(1);
+  const PAGE_SIZE = 20;
 
-  // 按需加载选中模型的价格数据
+  // 按需加载选中模型的价格数据（分页）
   useEffect(() => {
     if (!selectedModel) return;
 
     setLoading(true);
-    fetch(`/api/models/pricing?model=${encodeURIComponent(selectedModel)}`)
+    const params = new URLSearchParams({
+      model: selectedModel,
+      page: String(pricePage),
+      size: String(PAGE_SIZE),
+    });
+    fetch(`/api/models/pricing?${params}`)
       .then((res) => res.json())
       .then((data) => {
         setEntries(data.entries ?? []);
+        setPriceTotal(data.total ?? 0);
+        setPriceTotalPages(data.totalPages ?? 1);
       })
       .catch(() => {
         setEntries([]);
@@ -157,7 +168,7 @@ export function PriceTable({
       .finally(() => {
         setLoading(false);
       });
-  }, [selectedModel]);
+  }, [selectedModel, pricePage]);
 
   const normalizedQuery = modelQuery.trim().toLowerCase();
   const filteredModels = useMemo(
@@ -208,19 +219,10 @@ export function PriceTable({
     return rows;
   }, [entries, sortDirection, sortKey]);
 
-  const PAGE_SIZE = 20;
-  const [pricePage, setPricePage] = useState(1);
-
-  const totalPricePages = Math.ceil(priceRows.length / PAGE_SIZE);
-  const pagedPriceRows = priceRows.slice(
-    (pricePage - 1) * PAGE_SIZE,
-    pricePage * PAGE_SIZE
-  );
-
-  // 排序或模型变化时重置分页
+  // 模型变化时重置分页
   useEffect(() => {
     setPricePage(1);
-  }, [selectedModel, sortKey, sortDirection]);
+  }, [selectedModel]);
 
   const handleSort = (nextKey: SortKey) => {
     if (sortKey === nextKey) {
@@ -327,7 +329,7 @@ export function PriceTable({
               <TrendingDown className="size-3.5 text-primary" />
               当前排序：{sortLabel(sortKey)} {sortDirection === "asc" ? "升序" : "降序"}
             </span>
-            <span className="signal-chip">可比较报价：{loading ? "..." : priceRows.length} 条</span>
+            <span className="signal-chip">可比较报价：{loading ? "..." : priceTotal} 条</span>
           </div>
 
           {filteredModels.length > 0 && (
@@ -458,7 +460,7 @@ export function PriceTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pagedPriceRows.map(({ entry, group, presentation }, index) => {
+              {priceRows.map(({ entry, group, presentation }, index) => {
                 const globalIndex = (pricePage - 1) * PAGE_SIZE + index;
                 return (
                 <TableRow
@@ -515,10 +517,10 @@ export function PriceTable({
             </TableBody>
           </table>
 
-          {totalPricePages > 1 && (
+          {priceTotalPages > 1 && (
             <div className="flex items-center justify-between border-t border-border/70 px-5 py-3">
               <div className="text-xs text-muted-foreground">
-                第 {pricePage}/{totalPricePages} 页，共 {priceRows.length} 条
+                第 {pricePage}/{priceTotalPages} 页，共 {priceTotal} 条
               </div>
               <div className="flex gap-1">
                 <button
@@ -531,7 +533,7 @@ export function PriceTable({
                 </button>
                 <button
                   type="button"
-                  disabled={pricePage >= totalPricePages}
+                  disabled={pricePage >= priceTotalPages}
                   onClick={() => setPricePage((p) => p + 1)}
                   className="inline-flex size-8 items-center justify-center rounded-lg border border-border/70 bg-background/40 text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground disabled:opacity-30"
                 >
