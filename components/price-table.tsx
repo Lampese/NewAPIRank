@@ -380,26 +380,22 @@ export function PriceTable({
             <div className="text-sm text-muted-foreground">价格列标题可直接点击排序。</div>
           </div>
 
-          <Table className="min-w-[1320px]">
+          <Table>
             <TableHeader>
               <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">
-                <TableHead className="w-14 px-5 py-4 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="w-10 px-3 py-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   #
                 </TableHead>
-                <TableHead className="px-4 py-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                <TableHead className="px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   站点
                 </TableHead>
-                <TableHead className="px-4 py-4 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  所在分组
+                <TableHead className="w-24 px-3 py-3 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  分组
                 </TableHead>
-                <TableHead className="px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  <div className="flex justify-end">
-                    <span className="inline-flex min-w-[56px] items-center justify-center px-3 py-1">
-                      模式
-                    </span>
-                  </div>
+                <TableHead className="w-16 px-3 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                  模式
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="w-28 text-right">
                   <SortHead
                     label="输入价格"
                     sortKey="input"
@@ -408,7 +404,7 @@ export function PriceTable({
                     onSort={handleSort}
                   />
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="w-28 text-right">
                   <SortHead
                     label="输出价格"
                     sortKey="output"
@@ -417,7 +413,7 @@ export function PriceTable({
                     onSort={handleSort}
                   />
                 </TableHead>
-                <TableHead className="text-right">
+                <TableHead className="w-28 text-right">
                   <SortHead
                     label="缓存价格"
                     sortKey="cacheRead"
@@ -426,9 +422,9 @@ export function PriceTable({
                     onSort={handleSort}
                   />
                 </TableHead>
-                <TableHead className="px-5 text-right">
+                <TableHead className="w-28 px-3 text-right">
                   <SortHead
-                    label="缓存建立价格"
+                    label="缓存建立"
                     sortKey="cacheWrite"
                     currentKey={sortKey}
                     direction={sortDirection}
@@ -446,36 +442,30 @@ export function PriceTable({
                     index === 0 && "bg-primary/[0.04]"
                   )}
                 >
-                  <TableCell className="px-5 text-center text-sm font-semibold text-muted-foreground">
+                  <TableCell className="px-3 text-center text-sm text-muted-foreground">
                     {String(index + 1).padStart(2, "0")}
                   </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div className="min-w-0">
-                      <Link
-                        href={`/site/${entry.siteId}`}
-                        className="text-sm font-semibold text-foreground hover:text-primary"
-                      >
-                        {entry.siteName}
-                      </Link>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        成本汇率 {formatCnyPerUsdRate(presentation.effectiveRechargeCnyPerUsd)}
-                      </div>
+                  <TableCell className="px-3 py-3">
+                    <Link
+                      href={`/site/${entry.siteId}`}
+                      className="text-sm font-semibold text-foreground hover:text-primary"
+                    >
+                      {entry.siteName}
+                    </Link>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      汇率 {formatCnyPerUsdRate(presentation.effectiveRechargeCnyPerUsd)}
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-4">
-                    <div className="text-sm font-semibold text-foreground">
-                      {group}
-                    </div>
-                    <div className="mt-1 text-sm font-medium text-primary">
+                  <TableCell className="px-3 py-3">
+                    <div className="text-sm text-foreground">{group}</div>
+                    <div className="text-xs font-medium text-primary">
                       x{presentation.appliedGroupRatio.toFixed(2)}
                     </div>
                   </TableCell>
-                  <TableCell className="px-5 text-right">
-                    <div className="flex justify-end">
-                      <span className="inline-flex min-w-[56px] items-center justify-center rounded-full border border-border/70 bg-background/45 px-3 py-1 text-xs font-medium text-foreground">
-                        {entry.quotaType === 0 ? "按量" : "按次"}
-                      </span>
-                    </div>
+                  <TableCell className="px-3 text-center">
+                    <span className="inline-flex items-center justify-center rounded-full border border-border/70 bg-background/45 px-2 py-0.5 text-xs font-medium text-foreground">
+                      {entry.quotaType === 0 ? "按量" : "按次"}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right text-sm font-semibold text-foreground">
                     {entry.quotaType === 0
@@ -488,7 +478,7 @@ export function PriceTable({
                   <TableCell className="text-right text-sm font-semibold text-foreground">
                     {entry.quotaType === 0 ? formatCny(presentation.cacheReadCny) : "--"}
                   </TableCell>
-                  <TableCell className="px-5 text-right text-sm font-semibold text-foreground">
+                  <TableCell className="px-3 text-right text-sm font-semibold text-foreground">
                     {entry.quotaType === 0
                       ? formatCny(presentation.cacheWriteCny)
                       : formatCny(presentation.requestCny)}

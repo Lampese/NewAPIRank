@@ -98,9 +98,9 @@ export function SiteTable() {
           <TableHeader>
             <TableRow className="border-border/70 bg-background/30 hover:bg-background/30">
               <TableHead className="px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">节点</TableHead>
-              <TableHead className="w-20 text-xs uppercase tracking-[0.2em] text-muted-foreground">状态</TableHead>
-              <TableHead className="w-20 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">模型数</TableHead>
-              <TableHead className="w-24 px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">版本</TableHead>
+              <TableHead className="w-16 text-center text-xs uppercase tracking-[0.2em] text-muted-foreground">状态</TableHead>
+              <TableHead className="w-16 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">模型数</TableHead>
+              <TableHead className="w-20 px-5 text-right text-xs uppercase tracking-[0.2em] text-muted-foreground">版本</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
